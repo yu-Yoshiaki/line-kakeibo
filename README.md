@@ -5,14 +5,16 @@ LINEとGoogle Spreadsheetを連携した家計簿管理アプリケーション
 ## 機能
 
 - LINEを通じた家計簿データの入力
+  - フォーマット: `[項目] [金額]`
+  - 例: `ランチ 1000`
 - Google Spreadsheetsへの自動記録
-- 月次支出レポートの自動生成と送信
+  - 日付、時間、項目、金額を記録
 
 ## 技術スタック
 
 - Backend: Hono.js + TypeScript
-- LINE Messaging API
-- Google Sheets API
+- LINE Messaging API (@line/bot-sdk)
+- Google Sheets API (googleapis)
 
 ## セットアップ
 
@@ -25,7 +27,22 @@ npm install
 ```bash
 cp .env.example .env
 ```
-`.env`ファイルを編集し、必要な環境変数を設定してください。
+
+以下の環境変数を設定してください：
+
+```env
+# LINE Bot設定
+LINE_CHANNEL_SECRET=your_channel_secret
+LINE_CHANNEL_ACCESS_TOKEN=your_channel_access_token
+
+# Google Sheets API設定
+GOOGLE_SHEETS_PRIVATE_KEY=your_private_key
+GOOGLE_SHEETS_CLIENT_EMAIL=your_client_email
+SPREADSHEET_ID=your_spreadsheet_id
+
+# サーバー設定
+PORT=3000
+```
 
 3. 開発サーバーの起動:
 ```bash
@@ -43,12 +60,23 @@ npm run dev
 ```
 src/
   ├── index.ts          # メインアプリケーション
-  ├── config.ts         # 設定管理
-  ├── middleware/       # ミドルウェア
-  ├── routes/          # ルーター
-  ├── line/           # LINEボット関連
-  └── sheets/         # Google Sheets関連
+  ├── config/          # 設定管理
+  │   ├── line.ts    # LINE Bot設定
+  │   └── sheets.ts  # Google Sheets設定
+  ├── handlers/        # イベントハンドラー
+  │   ├── webhook-handler.ts
+  │   └── line-message.ts
+  ├── routes/          # ルーティング
+  │   └── webhook.ts
+  └── services/        # 外部サービス連携
+      └── sheets.ts
 ```
+
+## ドキュメント
+
+- [LINE Botメッセージハンドラー実装仕様書](docs/features/line-bot-message-handler.md)
+- [開発ワークフロー](docs/workflow.md)
+- [プロジェクト構造](docs/dev-structure.yaml)
 
 ## ライセンス
 
