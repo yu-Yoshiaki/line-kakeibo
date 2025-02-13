@@ -1,18 +1,15 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { config } from "./config";
-import { lineSignatureMiddleware } from "./middleware/line-signature";
+import webhookRouter from './routes/webhook';
 
 const app = new Hono();
 
-// LINEのWebhookエンドポイント
-app.post("/webhook", lineSignatureMiddleware, async (c) => {
-  // TODO: Implement webhook handler
-  return c.text("OK");
-});
+// ルートの設定
+app.route('/', webhookRouter);
 
 // ヘルスチェックエンドポイント
-app.post("/", (c) => c.text("LINE家計簿 API is running!"));
+app.get("/", (c) => c.text("LINE家計簿 API is running!"));
 
 console.log(`Server is running on port ${config.server.port}`);
 serve({
