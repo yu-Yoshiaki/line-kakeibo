@@ -16,13 +16,13 @@ LINE Messaging APIを使用して、ユーザーから送信された支出情�
 import * as line from '@line/bot-sdk';
 
 // LINE SDK config
-const config = {
-  channelSecret: process.env.CHANNEL_SECRET,
+export const config = {
+  channelSecret: process.env.LINE_CHANNEL_SECRET!,
 };
 
 // LINE SDK client
-const client = new line.messagingApi.MessagingApiClient({
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+export const client = new line.messagingApi.MessagingApiClient({
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN!
 });
 ```
 

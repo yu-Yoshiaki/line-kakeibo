@@ -69,16 +69,16 @@ technical_stack:
 project_structure:
   src:
     - index.ts (メインアプリケーション)
-    - config.ts (設定管理)
-    middleware:
-      - line-signature.ts (LINE署名検証)
+    config:
+      - line.ts (LINE Bot設定)
+      - sheets.ts (Google Sheets設定)
+    handlers:
+      - webhook-handler.ts (Webhook処理)
+      - line-message.ts (メッセージ処理)
     routes:
       - webhook.ts (Webhookルーター)
-    line:
-      - handler.ts (メッセージハンドラー)
-      - messages.ts (メッセージ定義)
-    sheets:
-      - manager.ts (スプレッドシート操作)
+    services:
+      - sheets.ts (Google Sheets操作)
 
 data_structure:
   spreadsheet:
