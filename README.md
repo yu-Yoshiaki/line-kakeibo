@@ -77,6 +77,7 @@ src/
 - [LINE Botメッセージハンドラー実装仕様書](docs/features/line-bot-message-handler.md)
 - [開発ワークフロー](docs/workflow.md)
 - [プロジェクト構造](docs/dev-structure.yaml)
+  - このファイルで定義されているスプレッドシートのデータ構造は、[スプレッドシートスキーマ](src/schema.yaml)として実装されています。
 
 ## ライセンス
 
