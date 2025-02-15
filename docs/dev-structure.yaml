@@ -17,6 +17,24 @@ core_features:
       - pattern: "[金額] [カテゴリー] [メモ]"
       - example: "1000 食費 コンビニ"
 
+  - name: 収入登録
+    description: LINEを通じた収入データの登録
+    message_format:
+      - pattern: "収入 [金額] [収入種別] [取引先] [メモ]"
+      - example: "収入 250000 給与 株式会社ABC 1月分給与"
+    categories:
+      - 事業収入
+      - 給与
+      - 副収入
+      - その他収入
+    data_structure:
+      - transactionId: String  # 取引ID（自動採番）
+      - date: Date            # 取引日
+      - category: String      # 収入種別
+      - amount: Number        # 金額
+      - client: String        # 取引先
+      - memo: String          # 備考
+
   - name: 支出記録
     description: Google Spreadsheetsへの自動記録
     implementation:
@@ -83,15 +101,25 @@ project_structure:
 data_structure:
   spreadsheet:
     sheets:
+      - income:
+          - transactionId: String  # 取引ID
+          - date: Date            # 取引日
+          - category: String      # 収入種別
+          - amount: Number        # 金額
+          - client: String        # 取引先
+          - memo: String          # 備考
+
       - transactions:
           - date: Date
           - amount: Number
           - category: String
           - memo: String
           - timestamp: DateTime
+
       - categories:
           - name: String
           - budget: Number
+
       - monthly_reports:
           - year: Number
           - month: Number
