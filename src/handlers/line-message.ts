@@ -3,6 +3,7 @@ import { saveExpense, addIncomeRecord } from "../services/sheets";
 import { client } from "../config/line";
 import { handleIncomeMessage } from "../handlers/income-handler";
 import { handleMenuMessage } from "../handlers/menu-handler";
+import { handleExpenseMessage } from "../handlers/expense-handler";
 
 interface ExpenseData {
   item: string;
@@ -41,6 +42,20 @@ export async function handleMessage(event: line.WebhookEvent) {
       return replyCustomMessage(event.replyToken, replyMessage);
     } catch (err) {
       console.error("Error handling income:", err);
+      return replyError(event.replyToken);
+    }
+  }
+
+  // 経費メッセージの場合
+  if (text.startsWith("経費")) {
+    try {
+      const replyMessage = await handleExpenseMessage(text);
+      return client.replyMessage({
+        replyToken: event.replyToken,
+        messages: [replyMessage]
+      });
+    } catch (err) {
+      console.error("Error handling expense:", err);
       return replyError(event.replyToken);
     }
   }
