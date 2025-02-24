@@ -1,59 +1,48 @@
-app_name: LINE家計簿
+app_name: L-memory
 version: 1.0.0
-description: LINEとGoogle Spreadsheetを連携した家計簿管理アプリケーション
+description: グループLINEのトーク履歴を記憶し、会話を活性化させるAIアシスタントサービス
 
 system_requirements:
   platform: Node.js
   framework: Hono.js
-  target_development_time: 1-2週間
-  approach: LINE Bot + Google Sheets連携
+  target_development_time: 2-3週間
+  approach: LINE Bot + AI会話分析
 
 core_features:
-  - name: LINE Bot
-    description: LINEを通じた家計簿データの入力
+  - name: トーク履歴記憶
+    description: グループLINEのトーク履歴を保存・分析
     components:
       - @line/bot-sdk
-    message_format:
-      - pattern: "[金額] [カテゴリー] [メモ]"
-      - example: "1000 食費 コンビニ"
-
-  - name: 収入登録
-    description: LINEを通じた収入データの登録
-    message_format:
-      - pattern: "収入 [金額] [収入種別] [取引先] [メモ]"
-      - example: "収入 250000 給与 株式会社ABC 1月分給与"
-    categories:
-      - 事業収入
-      - 給与
-      - 副収入
-      - その他収入
-    data_structure:
-      - transactionId: String  # 取引ID（自動採番）
-      - date: Date            # 取引日
-      - category: String      # 収入種別
-      - amount: Number        # 金額
-      - client: String        # 取引先
-      - memo: String          # 備考
-
-  - name: 支出記録
-    description: Google Spreadsheetsへの自動記録
-    implementation:
-      - Google Sheets API
-      - データの自動整理・分類
-    data_structure:
-      - 日付
-      - 金額
-      - カテゴリー
-      - メモ
-      - 登録時間
-
-  - name: レポート生成
-    description: 月次支出レポートの自動生成と送信
+      - OpenAI API
     features:
-      - カテゴリー別集計
-      - 月次比較
-      - グラフ生成
-      - LINEでの結果表示
+      - メッセージの自動保存
+      - 文脈理解
+      - 感情分析
+      - トピック分類
+
+  - name: 会話サマリー
+    description: グループの会話内容を要約・整理
+    features:
+      - 重要なポイントの抽出
+      - トピックごとの分類
+      - 定期的なサマリー配信
+      - キーワード抽出
+
+  - name: インタラクティブ応答
+    description: グループの文脈に応じた会話促進
+    features:
+      - 過去の話題の引用
+      - 関連する質問の投げかけ
+      - メンバーの発言促進
+      - 雰囲気に応じた会話介入
+
+  - name: グループ活性化
+    description: グループの活性度を監視し、適切なタイミングで介入
+    features:
+      - 活性度モニタリング
+      - 最適なタイミングでの声かけ
+      - メンバー間の関係性分析
+      - イベントやトピックの提案
 
 technical_stack:
   backend:
@@ -61,6 +50,7 @@ technical_stack:
     - TypeScript
     - @hono/node-server
     - @line/bot-sdk
+    - OpenAI API
     - googleapis
 
   integrations:
@@ -69,20 +59,36 @@ technical_stack:
         - メッセージ受信・解析
         - レスポンス送信
         - Webhook処理
+        - グループ管理
       benefits:
-        - リアルタイム入力
-        - 使いやすいインターフェース
+        - リアルタイムコミュニケーション
+        - グループチャット機能
         - プッシュ通知対応
+        - ユーザーフレンドリーなインターフェース
+
+    - name: OpenAI API
+      use_cases:
+        - 自然言語処理
+        - 文脈理解
+        - 感情分析
+        - 会話生成
+      benefits:
+        - 高度な言語理解
+        - 柔軟な応答生成
+        - コンテキストを考慮した応答
+        - パーソナライズされたインタラクション
 
     - name: Google Sheets API
       use_cases:
-        - データ記録
-        - 集計処理
-        - レポート生成
+        - トーク履歴の保存
+        - グループ情報の管理
+        - ユーザーデータの管理
+        - 分析結果の保存
       benefits:
+        - 直感的なデータ管理
+        - 手動での編集が容易
         - データの可視化
-        - 手動編集可能
-        - 共有機能
+        - 共有・協力機能
 
 project_structure:
   src:
