@@ -4,11 +4,20 @@ import { client } from "../config/line";
 import { handleIncomeMessage } from "../handlers/income-handler";
 import { handleMenuMessage } from "../handlers/menu-handler";
 import { handleExpenseMessage } from "../handlers/expense-handler";
+import { GroupMemberHandler } from "../handlers/group-member-handler";
 
 interface ExpenseData {
   item: string;
   amount: number;
 }
+
+const menu = [
+  { key: "help", label: "ヘルプ" },
+  { key: "menu", label: "メニュー" },
+  { key: "members", label: "メンバー一覧" },
+];
+
+const groupMemberHandler = new GroupMemberHandler();
 
 /**
  * LINEメッセージを処理する
@@ -20,73 +29,65 @@ export async function handleMessage(event: line.WebhookEvent) {
     return;
   }
 
+  // mention確認
+  if (event.type === "follow") {
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [
+        {
+          type: "text",
+          text: "ようこそ!",
+        },
+      ],
+    });
+  }
+
   if (event.type !== "message" || event.message.type !== "text") {
     return replyUnsupportedMessage(event.replyToken);
   }
 
   const { text } = event.message;
 
-  // メニューの場合
-  if (text === "メニュー" || text === "ヘルプ" || text === "help" || text === "menu") {
-    const menuMessage = handleMenuMessage();
+  // メンバー登録コマンドの処理
+  if (text.startsWith("メンバー登録")) {
+    const result = await groupMemberHandler.handleMemberRegistration(event);
     return client.replyMessage({
       replyToken: event.replyToken,
-      messages: [menuMessage]
+      messages: [{ type: "text", text: result.message }],
     });
   }
 
-  // 収入メッセージの場合
-  if (text.startsWith("収入")) {
-    try {
-      const replyMessage = await handleIncomeMessage(event);
-      return replyCustomMessage(event.replyToken, replyMessage);
-    } catch (err) {
-      console.error("Error handling income:", err);
-      return replyError(event.replyToken);
+  // メンバー一覧の取得
+  if (text === "members" && event.source.type === "group") {
+    const groupId = event.source.groupId;
+    const result = await groupMemberHandler.getGroupMembers(groupId);
+    let responseText = result.message;
+    if (result.members) {
+      responseText +=
+        "\n" +
+        result.members
+          .map(
+            (m) =>
+              `・${m.name} (登録日: ${new Date(
+                m.joinedAt
+              ).toLocaleDateString()})`
+          )
+          .join("\n");
     }
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [{ type: "text", text: responseText }],
+    });
   }
 
-  // 経費メッセージの場合
-  if (text.startsWith("経費")) {
-    try {
-      const replyMessage = await handleExpenseMessage(text);
-      return client.replyMessage({
-        replyToken: event.replyToken,
-        messages: [replyMessage]
-      });
-    } catch (err) {
-      console.error("Error handling expense:", err);
-      return replyError(event.replyToken);
-    }
+  // メニューの場合
+  if (menu.some((item) => item.key === text)) {
+    const menuMessage = handleMenuMessage();
+    return client.replyMessage({
+      replyToken: event.replyToken,
+      messages: [menuMessage],
+    });
   }
-
-  // 支出メッセージの場合
-  const expenseData = parseExpenseMessage(text);
-  if (!expenseData) {
-    return replyInvalidFormat(event.replyToken);
-  }
-
-  try {
-    await saveExpense(expenseData.item, expenseData.amount);
-    return replySuccess(event.replyToken, expenseData);
-  } catch (err) {
-    console.error("Error saving expense:", err);
-    return replyError(event.replyToken);
-  }
-}
-
-/**
- * メッセージから支出データを抽出する
- */
-function parseExpenseMessage(text: string): ExpenseData | null {
-  const match = text.match(/^(.+?)\s+(\d+)円?$/);
-  if (!match) return null;
-
-  const [, item, amountStr] = match;
-  const amount = parseInt(amountStr, 10);
-  if (isNaN(amount)) return null;
-
-  return { item, amount };
 }
 
 /**
