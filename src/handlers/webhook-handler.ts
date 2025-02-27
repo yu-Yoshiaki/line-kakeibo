@@ -2,6 +2,7 @@ import { Context } from "hono";
 import * as line from "@line/bot-sdk";
 import { handleMessage } from "./line-message";
 import { config } from "../config/line";
+import { handleTalkHistory } from "./talkHistory";
 
 /**
  * Webhookリクエストを処理する
@@ -25,7 +26,12 @@ export async function webhookHandler(c: Context) {
     const events: line.WebhookEvent[] = body.events;
 
     // 全てのイベントを処理
-    const results = await Promise.all(events.map(handleMessage));
+    const results = await Promise.all(events.map(async (event) => {
+      // トーク履歴の保存
+      await handleTalkHistory(event);
+      // 通常のメッセージ処理
+      return handleMessage(event);
+    }));
 
     return c.json(results);
   } catch (err) {
