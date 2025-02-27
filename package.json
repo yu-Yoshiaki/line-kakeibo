@@ -29,7 +29,8 @@
     "@line/bot-sdk": "^9.7.0",
     "dotenv": "^16.4.7",
     "googleapis": "^144.0.0",
-    "hono": "^4.7.1"
+    "hono": "^4.7.1",
+    "openai": "^4.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.2",

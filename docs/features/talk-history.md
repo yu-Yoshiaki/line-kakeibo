@@ -49,13 +49,26 @@ sequenceDiagram
 
 ## 技術仕様
 
+### スプレッドシート構造
+
+グループごとに個別のシートを作成し、トーク履歴を保存します。各シートの名前はグループIDとなります。
+
+各シートのヘッダー行（A1:H1）は以下の値を持ちます：
+
+```
+["Timestamp", "Group ID", "Group Name", "Group Picture URL", "User ID", "User Name", "Message Type", "Content"]
+```
+
+新しいグループが検出されると、自動的に新しいシートが作成されます。
+
 ### データモデル
 ```typescript
-// メッセージシートの構造
-interface MessageSheet {
-  timestamp: Date;        // メッセージ送信時刻
+// メッセージデータの構造
+interface MessageData {
+  timestamp: string;       // メッセージ送信時刻
   groupId: string;        // グループID
   groupName: string;      // グループ名
+  groupPictureUrl?: string; // グループアイコンURL
   userId: string;         // ユーザーID
   userName: string;       // ユーザー名
   messageType: string;    // メッセージタイプ（text, image, etc）
@@ -64,9 +77,9 @@ interface MessageSheet {
 
 // メッセージテンプレート
 const JOIN_MESSAGE = {
-  type: 'text',
+  type: 'textV2',
   text: 'こんにちは！グループのトーク履歴を取得できるように、過去のトーク履歴を.txt形式でこのグループにアップロードしてください。'
-};
+} as const;
 ```
 
 ### イベントハンドラー
@@ -96,32 +109,31 @@ interface JoinEvent {
   timestamp: number;
 }
 
-async function handleMessageEvent(event: MessageEvent) {
-  const { groupId, userId } = event.source;
-  const { type, text } = event.message;
-  
-  // グループとユーザーの情報を取得
-  const [groupProfile, userProfile] = await Promise.all([
-    client.getGroupProfile(groupId),
-    client.getProfile(userId)
-  ]);
-
-  // スプレッドシートに保存
-  await appendToSheet({
-    timestamp: new Date(event.timestamp),
-    groupId,
-    groupName: groupProfile.groupName,
-    userId,
-    userName: userProfile.displayName,
-    messageType: type,
-    content: text || ''
-  });
+async function handleMessageEvent(event: MessageEvent): Promise<void> {
+  try {
+    // メッセージを保存
+    await talkHistoryService.saveMessage(event);
+  } catch (error) {
+    console.error('Error handling message event:', error);
+    throw error;
+  }
 }
 
-async function handleJoinEvent(event: JoinEvent) {
-  const { groupId } = event.source;
-  if (isFirstJoin(groupId)) {
-    await client.pushMessage(groupId, JOIN_MESSAGE);
+async function handleJoinEvent(event: JoinEvent): Promise<void> {
+  try {
+    // グループ参加時の処理
+    await talkHistoryService.handleJoinEvent(event);
+    
+    // 初回参加メッセージを送信
+    if (event.source.type === 'group') {
+      await client.pushMessage({
+        to: event.source.groupId,
+        messages: [JOIN_MESSAGE]
+      });
+    }
+  } catch (error) {
+    console.error('Error handling join event:', error);
+    throw error;
   }
 }
 ```
@@ -137,6 +149,41 @@ async function handleJoinEvent(event: JoinEvent) {
 - グループ参加イベントのハンドリング失敗時の処理
 - スプレッドシート書き込み失敗時のリトライ処理
 - Google APIのレート制限対応
+
+## 実装ステップ
+
+### 1. サービスの実装
+
+`src/services/talkHistory.ts` に以下の機能を実装しました：
+
+- `saveMessage`: メッセージをスプレッドシートに保存
+- `ensureSheetExists`: グループ用のシートが存在するか確認し、必要に応じて作成
+- `getGroupSummary`: LINE APIを使用してグループ情報を取得
+- `createMessageData`: メッセージイベントからデータを作成
+- `convertToRow`: メッセージデータをスプレッドシートの行に変換
+- `appendToSheet`: データをスプレッドシートに追加
+- `handleJoinEvent`: グループ参加イベントを処理
+
+### 2. ハンドラーの実装
+
+`src/handlers/talkHistory.ts` に以下の機能を実装しました：
+
+- `handleTalkHistory`: イベントタイプに基づいて適切なハンドラーに振り分け
+- `handleMessageEvent`: メッセージイベントを処理
+- `handleJoinEvent`: グループ参加イベントを処理し、ウェルカムメッセージを送信
+
+### 3. Webhookハンドラーの更新
+
+`src/handlers/webhook-handler.ts` を更新してトーク履歴処理を組み込みました：
+
+```typescript
+const results = await Promise.all(events.map(async (event) => {
+  // トーク履歴の保存
+  await handleTalkHistory(event);
+  // 通常のメッセージ処理
+  return handleMessage(event);
+}));
+```
 
 ## セキュリティ考慮事項
 - LINE Messaging APIのチャネルアクセストークンの安全な管理

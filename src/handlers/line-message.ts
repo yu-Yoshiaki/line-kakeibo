@@ -22,11 +22,11 @@ const groupMemberHandler = new GroupMemberHandler();
 /**
  * LINEメッセージを処理する
  */
-export async function handleMessage(event: line.WebhookEvent) {
+export async function handleMessage(event: line.WebhookEvent): Promise<any> {
   // First check if the event has replyToken
   if (!("replyToken" in event)) {
     console.log("Event does not have replyToken:", event.type);
-    return;
+    return null;
   }
 
   // mention確認

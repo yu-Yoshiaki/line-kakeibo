@@ -8,7 +8,7 @@ interface GroupSummary {
   pictureUrl?: string;
 }
 
-interface MessageData {
+export interface MessageData {
   timestamp: string;
   groupId: string;
   groupName: string;
